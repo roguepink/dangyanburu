@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="description" content="ギャンブルをやめる毎日を記録するアプリ。継続日数・使わずに済んだお金・取り戻した時間・衝動を乗り切るタイマー・相談窓口。データは端末内にのみ保存されます。 / A gamble-free tracker: streaks, money and hours reclaimed, an urge timer and support contacts. All data stays on your device." />
+<meta property="og:title" content="ギャンブル断ちトラッカー / Gamble-Free Tracker" />
+<meta property="og:description" content="ギャンブルから離れる毎日を記録できる無料アプリ。データは端末内のみ。 / Track your gamble-free days, money and hours reclaimed. Free, private, installable." />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="icon-512.png" />
+<meta name="twitter:card" content="summary" />
+<meta name="theme-color" content="#0f766e" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0c1222" media="(prefers-color-scheme: dark)" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="ギャンブル断ち" />
+<title>ギャンブル断ちトラッカー</title>
+<script>
+/* テーマを描画前に反映（初回表示のちらつき防止） */
+try { var _s = JSON.parse(localStorage.getItem('dangamble_v1')); if (_s && _s.theme) document.documentElement.dataset.theme = _s.theme; } catch (e) {}
+</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕊️</text></svg>" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="manifest" href="manifest.json" id="manifestLink" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<a href="#main" class="skip-link" data-i18n="aria.skipToContent">本文へスキップ</a>
+<div id="app">
+  <header class="app-header">
+    <h1 data-i18n="app.title">🕊️ ギャンブル断ちトラッカー</h1>
+    <button id="settingsBtn" class="icon-btn" data-i18n-aria="aria.settings" aria-label="設定を開く">
+      <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z"/>
+        <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"/>
+      </svg>
+    </button>
+  </header>
+
+  <main id="main">
+    <!-- ═══════════ ホーム ═══════════ -->
+    <section id="home" class="view active" role="tabpanel" aria-label="ホーム">
+      <p class="greeting" id="greeting"></p>
+      <div class="card hero">
+        <div class="hero-top">
+          <div class="ring-wrap" id="ringWrap" role="button" tabindex="0" aria-label="継続日数（タップでマイルストーンへ）">
+            <svg class="ring" viewBox="0 0 200 200" aria-hidden="true">
+              <defs>
+                <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#fbbf24" />
+                  <stop offset="100%" stop-color="#34d399" />
+                </linearGradient>
+              </defs>
+              <circle class="ring-bg" cx="100" cy="100" r="86" />
+              <circle class="ring-fg" id="ringFg" cx="100" cy="100" r="86" />
+            </svg>
+            <div class="ring-center">
+              <span class="ring-label" data-i18n="ring.label">ギャンブル断ち</span>
+              <span class="ring-days"><b id="daysCount">0</b><i data-i18n="ring.dayUnit">日</i></span>
+              <span class="ring-sub" id="ringSub"></span>
+            </div>
+          </div>
+          <div class="hero-side" id="heroSide">
+            <div class="bank-visual">
+              <svg class="bank-svg" viewBox="0 0 110 92" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <defs>
+                  <clipPath id="bankClip">
+                    <path d="M28,26 L82,26 L88,80 C88.5,85 85,88 80,88 L30,88 C25,88 21.5,85 22,80 Z" />
+                  </clipPath>
+                  <linearGradient id="bankCoinGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#fde68a" />
+                    <stop offset="100%" stop-color="#f59e0b" />
+                  </linearGradient>
+                </defs>
+                <!-- 瓶の中身（下から貯まる） -->
+                <g clip-path="url(#bankClip)">
+                  <rect x="18" y="88" width="76" height="70" id="bankFill" fill="url(#bankCoinGrad)" />
+                  <g id="bankCoins" opacity="0.55">
+                    <circle cx="38" cy="74" r="5" fill="#fff8e1" />
+                    <circle cx="55" cy="80" r="5" fill="#fff8e1" />
+                    <circle cx="72" cy="72" r="5" fill="#fff8e1" />
+                    <circle cx="46" cy="60" r="5" fill="#fff8e1" />
+                    <circle cx="64" cy="55" r="5" fill="#fff8e1" />
+                    <circle cx="38" cy="44" r="5" fill="#fff8e1" />
+                  </g>
+                </g>
+                <!-- 瓶の輪郭 -->
+                <path d="M28,26 L82,26 L88,80 C88.5,85 85,88 80,88 L30,88 C25,88 21.5,85 22,80 Z"
+                      fill="none" stroke="currentColor" stroke-width="3.2" stroke-linejoin="round" opacity="0.75" />
+                <!-- ふた -->
+                <rect x="24" y="14" width="62" height="12" rx="4" fill="none" stroke="currentColor" stroke-width="3.2" opacity="0.75" />
+                <rect x="46" y="18" width="18" height="4" rx="2" fill="currentColor" opacity="0.55" />
+                <!-- ハイライト -->
+                <path d="M34,34 L31,78" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.35" />
+              </svg>
+              <button type="button" class="bank-tap-btn" id="bankInfoBtn" aria-haspopup="dialog" data-i18n-aria="bank.infoAria">
+                <span class="bank-tap-label" data-i18n="bank.tapLabel">タップ</span>
+              </button>
+            </div>
+            <p class="bank-caption" id="bankCaption"></p>
+            <p class="bank-note">
+              <span data-i18n="bank.note">※イメージ図</span>
+              <button type="button" class="bank-info-btn" id="bankInfoIcon" aria-haspopup="dialog" data-i18n-aria="bank.infoAria">ℹ️</button>
+            </p>
+          </div>
+        </div>
+        <div class="hero-chips">
+          <span class="chip" id="chipStreak"></span>
+          <span class="chip" id="chipTotal"></span>
+          <span class="chip" id="chipBest"></span>
+          <span class="chip" id="chipUrge" hidden></span>
+        </div>
+        <div class="week-strip" id="weekStrip" aria-label="直近7日間の記録"></div>
+        <p class="hero-start" id="counterSub"></p>
+      </div>
+
+      <button id="urgeBtn" class="btn btn-urge btn-lg" data-i18n="btn.urge">🌊 いま、やりたい気持ちが来た</button>
+      <button id="recordTodayBtn" class="btn btn-primary btn-lg" data-i18n="btn.recordToday">✅ 今日を記録する</button>
+      <button id="relapseBtn" class="btn-quiet" data-i18n="btn.relapse">やってしまった日を記録する…</button>
+
+      <div class="card goal-card" id="goalCard">
+        <div class="goal-head">
+          <span class="goal-title" data-i18n="goal.title">🎯 目標</span>
+          <span class="goal-count" id="goalCount"></span>
+        </div>
+        <div class="progress"><i id="goalBar"></i></div>
+        <p class="goal-sub" id="goalSub"></p>
+      </div>
+
+      <div class="card goal-card" id="rewardCard" hidden>
+        <div class="goal-head">
+          <span class="goal-title" data-i18n="reward.title">🎁 ごほうび貯金</span>
+          <span class="goal-count" id="rewardCount"></span>
+        </div>
+        <div class="progress"><i id="rewardBar"></i></div>
+        <p class="goal-sub" id="rewardSub"></p>
+      </div>
+
+      <div class="stat-grid">
+        <div class="card stat">
+          <span class="stat-emoji" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5C3 7 4.2 6 5.7 6H18.3C19.8 6 21 7 21 8.5V15.5C21 17 19.8 18 18.3 18H5.7C4.2 18 3 17 3 15.5Z"/><circle cx="12" cy="12" r="2.6"/><path d="M6.2 9.5V14.5 M17.8 9.5V14.5"/></svg></span>
+          <span class="stat-num" id="moneySaved">¥0</span>
+          <span class="stat-cap" data-i18n="stat.money">使わずに済んだお金</span>
+        </div>
+        <div class="card stat">
+          <span class="stat-emoji" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12.6" r="8"/><path d="M12 8V12.6L15 14.6 M9 2.6H15"/></svg></span>
+          <span class="stat-num" id="hoursSaved">0</span>
+          <span class="stat-cap" data-i18n="stat.hours">取り戻した時間</span>
+        </div>
+        <div class="card stat">
+          <span class="stat-emoji" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.4"/><path d="M3.5 9.6H20.5 M8 3.2V6.4 M16 3.2V6.4 M9.2 14.6 11.3 16.7 15 12.8"/></svg></span>
+          <span class="stat-num" id="cleanDays">0</span>
+          <span class="stat-cap" data-i18n="stat.days">やらなかった日数</span>
+        </div>
+        <div class="card stat">
+          <span class="stat-emoji" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 13.5 10.5 20 12 13.5 13.5 12 20 10.5 13.5 4 12 10.5 10.5Z"/></svg></span>
+          <span class="stat-num" id="cleanRate">100%</span>
+          <span class="stat-cap" data-i18n="stat.rate">開始からの達成率</span>
+        </div>
+      </div>
+
+      <div class="card safety-card">
+        <div class="advice-head">
+          <span class="advice-avatar">🔒</span>
+          <div class="advice-titles">
+            <span class="advice-title" data-i18n="safety.title">🔒 安全策</span>
+            <span class="advice-sub" data-i18n="safety.hint">意志の力より、環境を変えるほうが効きます</span>
+          </div>
+          <span class="safety-count" id="safetyCount"></span>
+        </div>
+        <div class="progress"><i id="safetyBar"></i></div>
+        <button id="openSafety" class="btn btn-sm safety-open" data-i18n="safety.open">安全策をチェックする</button>
+      </div>
+
+      <div class="card advice-card">
+        <div class="advice-head">
+          <span class="advice-avatar">💬</span>
+          <div class="advice-titles">
+            <span class="advice-title" data-i18n="advice.title">今日のメッセージ</span>
+            <span class="advice-sub" data-i18n="advice.sub">続けた日数に合わせて</span>
+          </div>
+          <button id="adviceRefresh" class="advice-refresh" data-i18n-aria="advice.refreshAria" aria-label="別のメッセージに切り替え">🔄</button>
+        </div>
+        <p class="advice-body" id="adviceBody"></p>
+        <p class="advice-note" data-i18n="advice.note"></p>
+      </div>
+
+      <div class="card today-card">
+        <div class="advice-head">
+          <span class="advice-avatar">💡</span>
+          <div class="advice-titles">
+            <span class="advice-title" data-i18n="today.title">💡 今日のひとこと</span>
+            <span class="advice-sub" id="todayDate"></span>
+          </div>
+        </div>
+        <p class="today-body" id="todayBody"></p>
+        <p class="advice-note" data-i18n="today.note">※日付ごとに決まっていて、その日は何度開いても同じ内容です</p>
+      </div>
+
+      <div class="card help-card">
+        <div class="advice-head">
+          <span class="advice-avatar">☎️</span>
+          <div class="advice-titles">
+            <span class="advice-title" data-i18n="help.title">☎️ 相談できる窓口</span>
+            <span class="advice-sub" data-i18n="help.hint">つらいとき、お金で困ったとき</span>
+          </div>
+        </div>
+        <button id="openHelp" class="btn btn-sm safety-open" data-i18n="help.open">窓口を見る</button>
+      </div>
+    </section>
+
+    <!-- ═══════════ 記録 ═══════════ -->
+    <section id="log" class="view" role="tabpanel" aria-label="記録">
+      <div class="card">
+        <h2 data-i18n="log.today">今日の記録</h2>
+        <div id="todaySummary"></div>
+      </div>
+      <div class="card">
+        <h2 data-i18n="log.history">これまでの記録</h2>
+        <div id="logList" class="log-list"></div>
+      </div>
+    </section>
+
+    <!-- ═══════════ 統計 ═══════════ -->
+    <section id="stats" class="view" role="tabpanel" aria-label="統計">
+      <div class="card">
+        <h2 data-i18n="stats.calendar">カレンダー</h2>
+        <div class="cal-head">
+          <button id="calPrev" class="icon-btn" data-i18n-aria="cal.prev" aria-label="前の月">‹</button>
+          <span id="calTitle"></span>
+          <button id="calNext" class="icon-btn" data-i18n-aria="cal.next" aria-label="次の月">›</button>
+        </div>
+        <div id="calendar" class="calendar"></div>
+        <div class="cal-legend">
+          <span><i class="dot sober"></i><span data-i18n="legend.clean">やらなかった日</span></span>
+          <span><i class="dot relapse"></i><span data-i18n="legend.relapse">やってしまった日</span></span>
+          <span><i class="dot today"></i><span data-i18n="legend.today">今日</span></span>
+        </div>
+        <div id="dayDetail" class="day-detail" hidden></div>
+      </div>
+      <div class="card" id="urgeWinCard" hidden>
+        <h2 data-i18n="stats.urgeWins">衝動を乗り切った回数</h2>
+        <p class="urge-win-body" id="urgeWinBody"></p>
+      </div>
+      <div class="card">
+        <h2 data-i18n="stats.mood">気分の推移（直近14日）</h2>
+        <canvas id="moodChart" height="140"></canvas>
+      </div>
+      <div class="card">
+        <h2 data-i18n="stats.urge">やりたい気持ちの推移（直近14日）</h2>
+        <canvas id="urgeChart" height="140"></canvas>
+      </div>
+      <div class="card" id="triggerCard" hidden>
+        <h2 data-i18n="stats.triggers">よくあるきっかけ</h2>
+        <div id="triggerInsight" class="trigger-insight"></div>
+      </div>
+      <div class="card" id="spentCard" hidden>
+        <h2 data-i18n="stats.spent">やってしまった日の合計</h2>
+        <p class="spent-body" id="spentBody"></p>
+        <p class="hint" data-i18n="stats.spentHint">責めるための数字ではなく、事実を見るための数字です</p>
+      </div>
+    </section>
+
+    <!-- ═══════════ 達成 ═══════════ -->
+    <section id="badges" class="view" role="tabpanel" aria-label="達成">
+      <div class="card">
+        <h2 data-i18n="badges.title">マイルストーン</h2>
+        <p id="badgesEmptyHint" class="empty" hidden data-i18n="badges.emptyHint">まずは1日から。続けるほどここにバッジが増えていきます。</p>
+        <div id="badgeGrid" class="badge-grid"></div>
+      </div>
+      <div class="card">
+        <h2 data-i18n="badges.share">シェア</h2>
+        <p class="hint" style="margin:0 0 12px" data-i18n="badges.shareHint">日数と金額だけで、個人情報は含まれません。</p>
+        <button id="shareBtn" class="btn btn-primary" style="width:100%" data-i18n="badges.shareBtn">📣 記録をシェアする</button>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" role="tablist" aria-label="メインナビゲーション">
+    <button class="nav-item active" data-tab="home" role="tab" aria-selected="true">
+      <span class="nav-emoji" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11 12 4 20 11 M6 10.3V20H18V10.3 M10 20V14H14V20"/></svg></span>
+      <span class="nav-label" data-i18n="nav.home">ホーム</span>
+    </button>
+    <button class="nav-item" data-tab="log" role="tab" aria-selected="false">
+      <span class="nav-emoji" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 19 9 8 20H4V16L15 5Z M13 7 17 11"/></svg></span>
+      <span class="nav-label" data-i18n="nav.log">記録</span>
+    </button>
+    <button class="nav-item" data-tab="stats" role="tab" aria-selected="false">
+      <span class="nav-emoji" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20H21 M6 20V13 M12 20V9 M18 20V15"/><g fill="currentColor" stroke="none"><circle cx="6" cy="13" r="1.1"/><circle cx="12" cy="9" r="1.1"/><circle cx="18" cy="15" r="1.1"/></g></svg></span>
+      <span class="nav-label" data-i18n="nav.stats">統計</span>
+    </button>
+    <button class="nav-item" data-tab="badges" role="tab" aria-selected="false">
+      <span class="nav-emoji" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4H17V9C17 13 14.7 15.2 12 15.2C9.3 15.2 7 13 7 9Z M7 5H4C4 8 5.5 9.6 7 10.1 M17 5H20C20 8 18.5 9.6 17 10.1 M12 15.2V18 M9 21H15 M9.4 21 10 18H14L14.6 21"/></svg></span>
+      <span class="nav-label" data-i18n="nav.badges">達成</span>
+    </button>
+  </nav>
+
+  <button id="urgeFab" class="sos-fab" data-i18n="urge.fab" aria-label="やりたい気持ちが来たとき">🌊 波が来た</button>
+</div>
+
+<!-- ═══════════ 記録シート ═══════════ -->
+<div id="recordSheet" class="sheet hidden" role="dialog" aria-modal="true" aria-label="記録">
+  <div class="sheet-panel">
+    <div class="sheet-grip" aria-hidden="true"><i></i></div>
+    <h2 id="recordDateTitle">今日の記録</h2>
+    <p class="field-label" data-i18n="record.mood">今日の気分は？</p>
+    <div class="mood-row" id="moodRow">
+      <button class="mood" data-mood="5" data-i18n-aria="mood.5" aria-label="とても良い">😄</button>
+      <button class="mood" data-mood="4" data-i18n-aria="mood.4" aria-label="良い">🙂</button>
+      <button class="mood" data-mood="3" data-i18n-aria="mood.3" aria-label="ふつう">😐</button>
+      <button class="mood" data-mood="2" data-i18n-aria="mood.2" aria-label="少しつらい">😟</button>
+      <button class="mood" data-mood="1" data-i18n-aria="mood.1" aria-label="つらい">😣</button>
+    </div>
+    <label class="field">
+      <span data-i18n="record.urge">やりたい気持ちの強さ</span>
+      <input type="range" id="urgeLevel" min="0" max="10" value="0" />
+      <output id="urgeOut">0 / 10</output>
+    </label>
+    <p class="field-label" data-i18n="record.triggers">きっかけがあれば（複数OK）</p>
+    <div class="trigger-row" id="triggerRow">
+      <button class="trigger" data-trigger="ストレス" data-i18n="trigger.ストレス">😤 ストレス</button>
+      <button class="trigger" data-trigger="退屈" data-i18n="trigger.退屈">🥱 退屈</button>
+      <button class="trigger" data-trigger="給料日・入金" data-i18n="trigger.給料日・入金">💴 給料日・入金</button>
+      <button class="trigger" data-trigger="広告・通知" data-i18n="trigger.広告・通知">📱 広告・通知</button>
+      <button class="trigger" data-trigger="負けを取り返したい" data-i18n="trigger.負けを取り返したい">🔁 取り返したい</button>
+      <button class="trigger" data-trigger="勝った記憶" data-i18n="trigger.勝った記憶">🎰 勝った記憶</button>
+      <button class="trigger" data-trigger="一人の時間" data-i18n="trigger.一人の時間">🌙 一人の時間</button>
+      <button class="trigger" data-trigger="誘われた" data-i18n="trigger.誘われた">🤝 誘われた</button>
+      <button class="trigger" data-trigger="お酒" data-i18n="trigger.お酒">🍺 お酒</button>
+      <button class="trigger" data-trigger="通り道" data-i18n="trigger.通り道">🚶 通り道</button>
+    </div>
+    <textarea id="note" data-i18n-ph="record.notePh" placeholder="今日の気づき・工夫など…"></textarea>
+    <div class="sheet-actions">
+      <button id="saveLogBtn" class="btn btn-primary" data-i18n="record.save">保存する</button>
+      <button id="closeRecord" class="btn" data-i18n="record.close">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ スリップシート ═══════════ -->
+<div id="relapseSheet" class="sheet hidden" role="dialog" aria-modal="true" aria-label="やってしまった日の記録">
+  <div class="sheet-panel sheet-tall">
+    <div class="sheet-grip" aria-hidden="true"><i></i></div>
+    <h2 data-i18n="relapse.title">やってしまった日を記録</h2>
+    <p class="relapse-copy" data-i18n-html="relapse.copy"></p>
+    <p class="field-label" data-i18n="relapse.when">いつですか？</p>
+    <div class="seg" id="relapseDaySeg">
+      <button class="seg-btn active" data-day="0" data-i18n="relapse.today">今日</button>
+      <button class="seg-btn" data-day="1" data-i18n="relapse.yesterday">昨日</button>
+      <button class="seg-btn" data-day="other" data-i18n="relapse.other">別の日</button>
+    </div>
+    <label class="field" id="relapseDateField" hidden>
+      <span data-i18n="relapse.dateLabel">その日を選んでください</span>
+      <input type="date" id="relapseDate" />
+    </label>
+    <label class="field">
+      <span data-i18n="relapse.amountLabel">いくら使いましたか？（任意）</span>
+      <input type="number" id="relapseAmount" min="0" step="1" max="100000000" data-i18n-ph="relapse.amountPh" placeholder="例: 20000" />
+    </label>
+    <p class="hint" data-i18n="relapse.amountHint"></p>
+    <p class="field-label" data-i18n="relapse.chaseLabel">負けを取り返そうとして、続けましたか？</p>
+    <div class="seg" id="relapseChaseSeg">
+      <button class="seg-btn" data-chase="1" data-i18n="relapse.chaseYes">はい</button>
+      <button class="seg-btn active" data-chase="0" data-i18n="relapse.chaseNo">いいえ</button>
+    </div>
+    <p class="hint" data-i18n="relapse.chaseHint"></p>
+    <label class="field">
+      <span data-i18n="relapse.noteLabel">きっかけをメモしておくと、次に活かせます（任意）</span>
+      <textarea id="relapseNote" data-i18n-ph="relapse.notePh" placeholder="例: 給料日に一人で駅前を通った"></textarea>
+    </label>
+    <div class="sheet-actions sticky-actions">
+      <button id="saveRelapseBtn" class="btn btn-danger-solid" data-i18n="relapse.save">記録して再開する</button>
+      <button id="closeRelapse" class="btn" data-i18n="relapse.cancel">やめる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 安全策シート ═══════════ -->
+<div id="safetySheet" class="sheet hidden" role="dialog" aria-modal="true" aria-label="安全策">
+  <div class="sheet-panel sheet-tall">
+    <div class="sheet-grip" aria-hidden="true"><i></i></div>
+    <h2 data-i18n="safety.sheetTitle">環境を変える安全策</h2>
+    <p class="relapse-copy" data-i18n-html="safety.lead"></p>
+    <div class="safety-list" id="safetyList"></div>
+    <p class="advice-note" data-i18n="safety.note"></p>
+    <div class="sheet-actions sticky-actions">
+      <button id="closeSafety" class="btn btn-primary" data-i18n="safety.close">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 相談窓口シート ═══════════ -->
+<div id="helpSheet" class="sheet hidden" role="dialog" aria-modal="true" aria-label="相談できる窓口">
+  <div class="sheet-panel sheet-tall">
+    <div class="sheet-grip" aria-hidden="true"><i></i></div>
+    <h2 data-i18n="help.sheetTitle">相談できる窓口</h2>
+    <p class="help-urgent" data-i18n="help.urgent"></p>
+    <div id="helpUrgentTel" class="help-urgent-tel"></div>
+    <p class="relapse-copy" data-i18n="help.lead"></p>
+    <div class="help-list" id="helpList"></div>
+    <p class="advice-note" data-i18n="help.note"></p>
+    <div class="sheet-actions sticky-actions">
+      <button id="closeHelp" class="btn btn-primary" data-i18n="help.close">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 設定シート ═══════════ -->
+<div id="settingsSheet" class="sheet hidden" role="dialog" aria-modal="true" aria-label="設定">
+  <div class="sheet-panel sheet-tall">
+    <div class="sheet-grip" aria-hidden="true"><i></i></div>
+    <h2 data-i18n="set.title">設定</h2>
+
+    <p class="sec-title" data-i18n="set.lang">言語 / Language</p>
+    <div class="seg" id="langSeg">
+      <button class="seg-btn" data-lang="auto" data-i18n="lang.auto">自動</button>
+      <button class="seg-btn" data-lang="ja">日本語</button>
+      <button class="seg-btn" data-lang="en">English</button>
+    </div>
+
+    <p class="sec-title" data-i18n="set.display">表示</p>
+    <div class="seg" id="themeSeg">
+      <button class="seg-btn" data-theme="auto" data-i18n="theme.auto">自動</button>
+      <button class="seg-btn" data-theme="light" data-i18n="theme.light">ライト</button>
+      <button class="seg-btn" data-theme="dark" data-i18n="theme.dark">ダーク</button>
+    </div>
+
+    <p class="sec-title" data-i18n="set.weekStart">カレンダーの週の始まり</p>
+    <div class="seg" id="weekStartSeg">
+      <button class="seg-btn" data-week="sun" data-i18n="week.sun">日曜始まり</button>
+      <button class="seg-btn" data-week="mon" data-i18n="week.mon">月曜始まり</button>
+    </div>
+
+    <p class="sec-title" data-i18n="set.basic">基本</p>
+    <label class="field"><span data-i18n="set.startDate">始めた日</span><input type="date" id="startDate" /></label>
+    <label class="field"><span data-i18n="set.goalDays">目標日数</span><input type="number" id="goalDays" min="1" step="1" value="30" max="3650" /></label>
+
+    <p class="sec-title" data-i18n="set.habit">これまでの習慣</p>
+    <p class="hint" data-i18n="set.habitHint"></p>
+    <label class="field"><span data-i18n="set.currency">通貨</span>
+      <select id="currency">
+        <option value="JPY">¥ 円 (JPY)</option>
+        <option value="USD">$ US Dollar (USD)</option>
+        <option value="EUR">€ Euro (EUR)</option>
+        <option value="GBP">£ Pound (GBP)</option>
+        <option value="KRW">₩ Won (KRW)</option>
+      </select>
+    </label>
+    <p class="hint hint-warn" id="currencyWarn" hidden data-i18n="set.currencyWarn"></p>
+    <label class="field"><span data-i18n="set.spendPerWeek">1週間あたりの平均額</span><input type="number" id="spendPerWeek" min="0" step="100" value="10000" max="100000000" /></label>
+    <label class="field"><span data-i18n="set.hoursPerWeek">1週間あたりの平均時間</span><input type="number" id="hoursPerWeek" min="0" step="0.5" value="6" max="168" /></label>
+
+    <p class="sec-title" data-i18n="set.reward">ごほうび貯金</p>
+    <label class="field"><span data-i18n="set.rewardName">目当てのもの</span><input type="text" id="rewardName" data-i18n-ph="set.rewardNamePh" placeholder="例: 家族と旅行" maxlength="30" /></label>
+    <label class="field"><span data-i18n="set.rewardPrice">必要な金額</span><input type="number" id="rewardPrice" min="0" step="1" data-i18n-ph="set.rewardPricePh" placeholder="例: 100000" max="100000000" /></label>
+    <p class="hint" data-i18n="set.rewardHint"></p>
+
+    <p class="sec-title" data-i18n="set.you">あなたのこと</p>
+    <label class="field"><span data-i18n="set.nickname">ニックネーム（任意）</span><input type="text" id="nickname" data-i18n-ph="set.nicknamePh" placeholder="例: たろう" maxlength="12" autocomplete="off" /></label>
+    <label class="field"><span data-i18n="set.birth">生年月日（任意）</span><input type="date" id="birthDate" /></label>
+    <label class="field"><span data-i18n="set.reasons">やめる理由（1行に1つ）</span><textarea id="reasonsInput" data-i18n-ph="set.reasonsPh" placeholder="例: 家族に嘘をつきたくない"></textarea></label>
+    <p class="hint" data-i18n="set.reasonsHint"></p>
+
+    <p class="sec-title" data-i18n="set.safety">安全策</p>
+    <button id="openSafetyFromSet" class="btn" data-i18n="safety.open">安全策をチェックする</button>
+
+    <p class="sec-title" data-i18n="set.help">困ったとき</p>
+    <button id="openHelpFromSet" class="btn" data-i18n="help.open">窓口を見る</button>
+
+    <p class="sec-title" data-i18n="set.notif">リマインダー</p>
+    <label class="field toggle-field"><span data-i18n="set.reminderOn">毎日のリマインダー</span><input type="checkbox" id="reminderOn" /></label>
+    <label class="field" id="reminderTimeField"><span data-i18n="set.reminderTime">通知する時刻</span><input type="time" id="reminderTime" value="21:00" /></label>
+    <p class="hint" id="reminderHint"></p>
+
+    <p class="sec-title" data-i18n="set.data">データ</p>
+    <div class="data-actions">
+      <button id="exportBtn" class="btn" data-i18n="set.export">📤 バックアップを保存</button>
+      <label class="btn file-btn"><span data-i18n="set.import">📥 バックアップから復元</span><input type="file" id="importFile" accept=".json,application/json" hidden /></label>
+    </div>
+    <p class="hint" data-i18n="set.dataHint"></p>
+    <details class="migrate-details">
+      <summary data-i18n="set.migrateTitle">機種変更するときは</summary>
+      <ol class="migrate-steps">
+        <li data-i18n="set.migrateStep1"></li>
+        <li data-i18n="set.migrateStep2"></li>
+        <li data-i18n="set.migrateStep3"></li>
+      </ol>
+    </details>
+
+    <p class="sec-title" data-i18n="set.otherApps">他のアプリ</p>
+    <p class="hint" data-i18n="set.otherAppsHint">同じしくみで作った姉妹アプリです</p>
+    <a class="btn link-btn" href="https://nakanointeria5963-alt.github.io/kinnsyu/" target="_blank" rel="noopener" data-i18n="set.linkKinshu">🌱 禁酒トラッカー</a>
+    <a class="btn link-btn" href="https://nakanointeria5963-alt.github.io/sesshu/" target="_blank" rel="noopener" data-i18n="set.linkSesshu">🍶 節酒サポート</a>
+    <a class="btn link-btn" href="https://nakanointeria5963-alt.github.io/kinnenn/" target="_blank" rel="noopener" data-i18n="set.linkKinen">🚭 禁煙トラッカー</a>
+
+    <div class="sheet-actions sticky-actions">
+      <button id="saveSettings" class="btn btn-primary" data-i18n="set.save">保存する</button>
+      <button id="closeSettings" class="btn" data-i18n="set.close">閉じる</button>
+    </div>
+    <button id="resetAll" class="btn-link-danger" data-i18n="set.reset">すべての記録を削除</button>
+  </div>
+</div>
+
+<!-- ═══════════ 貯金箱イラストの注意書き ═══════════ -->
+<div id="bankInfoSheet" class="sheet hidden" role="dialog" aria-modal="true" aria-label="貯金箱イラストについて">
+  <div class="sheet-panel">
+    <div class="sheet-grip" aria-hidden="true"><i></i></div>
+    <h2 data-i18n="bank.infoTitle">貯金箱のイラストについて</h2>
+    <p class="advice-note bank-info-body" data-i18n-html="bank.infoBody"></p>
+    <div class="sheet-actions">
+      <button id="closeBankInfo" class="btn btn-primary" data-i18n="bank.infoClose">わかりました</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 衝動タイマー ═══════════ -->
+<div id="urgeOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="やりたい気持ちを乗り切る">
+  <div class="sos-box">
+    <h2 data-i18n="urge.title">この波は、必ず引いていきます 🌊</h2>
+    <p class="sos-sub" data-i18n="urge.sub">やりたい気持ちの山は、多くの場合10分ほどで越えていきます</p>
+
+    <div id="urgeSetup">
+      <p class="field-label" data-i18n="urge.pick">何分やり過ごしますか？</p>
+      <div class="seg" id="urgeMinSeg">
+        <button class="seg-btn" data-min="3">3分</button>
+        <button class="seg-btn active" data-min="10">10分</button>
+        <button class="seg-btn" data-min="20">20分</button>
+      </div>
+    </div>
+
+    <div class="breath-stage">
+      <div class="breath-circle" id="breathCircle"></div>
+      <div class="breath-center">
+        <span id="breathPhase">準備</span>
+        <span id="breathCount" class="breath-count">10:00</span>
+      </div>
+    </div>
+
+    <p class="urge-tip" id="urgeTip"></p>
+
+    <div id="urgeAsk" hidden>
+      <p class="urge-ask" data-i18n="urge.doneAsk">今回は、乗り切れましたか？</p>
+      <div class="sheet-actions">
+        <button id="urgeWon" class="btn btn-primary btn-lg" data-i18n="urge.won">乗り切れた 🎉</button>
+        <button id="urgeLost" class="btn" data-i18n="urge.lost">やってしまった</button>
+      </div>
+    </div>
+
+    <div class="sheet-actions sos-actions" id="urgeActions">
+      <button id="urgeStart" class="btn btn-primary btn-lg" data-i18n="urge.start">はじめる</button>
+      <button id="urgeClose" class="btn btn-lg" data-i18n="urge.close">閉じる</button>
+    </div>
+
+    <button id="urgeHelpLink" class="btn-quiet urge-help" data-i18n="urge.helpLink">いま話せる窓口を見る</button>
+    <div id="urgeReasons" class="sos-reasons"></div>
+  </div>
+</div>
+
+<!-- ═══════════ 初回オンボーディング ═══════════ -->
+<div id="onboarding" class="overlay hidden" role="dialog" aria-modal="true" aria-label="はじめての設定">
+  <div class="ob-box">
+    <div class="ob-step" data-step="1">
+      <div class="ob-emoji">🕊️</div>
+      <h2 data-i18n="ob.welcome">ようこそ！</h2>
+      <p class="ob-lead" data-i18n="ob.lead1"></p>
+      <label class="field"><span data-i18n="ob.startDate">やめた日（今日からでOK）</span><input type="date" id="obStartDate" /></label>
+      <p class="field-label" data-i18n="ob.why">やめる理由は？（あとで変更できます）</p>
+      <div class="trigger-row" id="reasonChips">
+        <button class="trigger" data-reason="借金を減らしたい" data-i18n="reason.借金を減らしたい">💴 借金を減らしたい</button>
+        <button class="trigger" data-reason="家族・大切な人のため" data-i18n="reason.家族・大切な人のため">👨‍👩‍👧 家族のため</button>
+        <button class="trigger" data-reason="嘘をつきたくない" data-i18n="reason.嘘をつきたくない">🤍 嘘をつきたくない</button>
+        <button class="trigger" data-reason="時間を取り戻したい" data-i18n="reason.時間を取り戻したい">⏳ 時間を取り戻したい</button>
+        <button class="trigger" data-reason="仕事や学業のため" data-i18n="reason.仕事や学業のため">📈 仕事・学業のため</button>
+        <button class="trigger" data-reason="自分を取り戻したい" data-i18n="reason.自分を取り戻したい">🤝 自分を取り戻したい</button>
+      </div>
+      <button id="obNext1" class="btn btn-primary btn-lg" data-i18n="ob.next">次へ</button>
+    </div>
+    <div class="ob-step" data-step="2" hidden>
+      <div class="ob-emoji">💴</div>
+      <h2 data-i18n="ob.habit">これまでの習慣</h2>
+      <p class="ob-lead" data-i18n="ob.lead2"></p>
+      <label class="field"><span data-i18n="set.spendPerWeek">1週間あたりの平均額</span><input type="number" id="obSpend" min="0" step="100" value="10000" max="100000000" /></label>
+      <label class="field"><span data-i18n="set.hoursPerWeek">1週間あたりの平均時間</span><input type="number" id="obHours" min="0" step="0.5" value="6" max="168" /></label>
+      <div class="sheet-actions">
+        <button id="obNext2" class="btn btn-primary" data-i18n="ob.next">次へ</button>
+        <button id="obBack2" class="btn" data-i18n="ob.back">戻る</button>
+      </div>
+    </div>
+    <div class="ob-step" data-step="3" hidden>
+      <div class="ob-emoji">🎯</div>
+      <h2 data-i18n="ob.goalTitle">最初の目標</h2>
+      <p class="ob-lead" data-i18n="ob.lead3"></p>
+      <label class="field"><span data-i18n="ob.goalDays">目標日数</span><input type="number" id="obGoal" min="1" step="1" value="30" max="3650" /></label>
+      <label class="field"><span data-i18n="ob.birth">生年月日（任意）</span><input type="date" id="obBirth" /></label>
+      <div class="sheet-actions">
+        <button id="obNext3" class="btn btn-primary" data-i18n="ob.next">次へ</button>
+        <button id="obBack3" class="btn" data-i18n="ob.back">戻る</button>
+      </div>
+    </div>
+    <div class="ob-step" data-step="4" hidden>
+      <div class="ob-emoji">🔒</div>
+      <h2 data-i18n="ob.safetyTitle">最後に、いちばん大事なこと</h2>
+      <p class="ob-lead" data-i18n-html="ob.safetyLead"></p>
+      <div class="sheet-actions">
+        <button id="obSafety" class="btn btn-primary" data-i18n="ob.safetyBtn">安全策を見てみる</button>
+        <button id="obFinish" class="btn" data-i18n="ob.safetySkip">あとで見る</button>
+      </div>
+      <button id="obBack4" class="btn-quiet" data-i18n="ob.back">戻る</button>
+    </div>
+    <div class="ob-dots" id="obDots"><i class="on"></i><i></i><i></i><i></i></div>
+  </div>
+</div>
+
+<!-- ═══════════ スリップ記録の確認 ═══════════ -->
+<div id="relapseConfirm" class="rc-overlay hidden" role="alert" aria-hidden="true">
+  <div class="rc-card">
+    <div class="rc-icon">🌱</div>
+    <p class="rc-msg" id="rcMsg"></p>
+    <div class="rc-actions">
+      <button id="rcUndo" class="rc-undo"></button>
+      <button id="rcClose" class="rc-close" data-i18n-aria="aria.close" aria-label="閉じる">✕</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+<div id="backupNudge" class="backup-nudge hidden" role="status" aria-live="polite">
+  <button id="backupNudgeClose" class="backup-nudge-x" data-i18n-aria="aria.close" aria-label="閉じる">✕</button>
+  <div class="backup-nudge-row">
+    <span class="backup-nudge-icon" aria-hidden="true">💾</span>
+    <p class="backup-nudge-msg" data-i18n="backup.nudge"></p>
+  </div>
+  <div class="backup-nudge-actions">
+    <button id="backupNudgeSave" class="btn btn-primary btn-sm" data-i18n="backup.nudgeBtn">保存する</button>
+    <button id="backupNudgeLater" class="btn-quiet backup-nudge-quiet" data-i18n="backup.nudgeLater">あとで</button>
+    <button id="backupNudgeMute" class="btn-quiet backup-nudge-quiet" data-i18n="backup.nudgeMute">今後表示しない</button>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="util.js"></script>
+<script src="advisor.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+{
+  "name": "ギャンブル断ちトラッカー",
+  "short_name": "ギャンブル断ち",
+  "description": "ギャンブルをやめる毎日を記録するアプリ。継続日数・使わずに済んだお金・衝動を乗り切るタイマー。データは端末内にのみ保存されます。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f2f6f6",
+  "theme_color": "#0f766e",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "今日を記録する",
+      "short_name": "記録",
+      "url": "./?action=record",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "やりたい気持ちが来たとき",
+      "short_name": "衝動",
+      "url": "./?action=urge",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "dangyanburu",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ギャンブルをやめる毎日をサポートするモバイルファーストのWebアプリ（PWA）です。サーバー不要で、データはすべて端末のブラウザ（localStorage）に保存されます。",
+  "scripts": {
+    "test": "node tests/smoke.cjs",
+    "stamp-sw": "node tools/stamp-sw.cjs",
+    "stamp-sw:check": "node tools/stamp-sw.cjs --check",
+    "lint": "eslint .",
+    "format": "prettier --write \"**/*.{js,cjs,json,css,html}\"",
+    "format:check": "prettier --check \"**/*.{js,cjs,json,css,html}\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nakanointeria5963-alt/dangyanburu.git"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "^10.7.0",
+    "playwright": "^1.48.0",
+    "prettier": "^3.9.5"
+  }
+}
