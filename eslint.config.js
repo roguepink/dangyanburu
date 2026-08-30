@@ -20,6 +20,8 @@ const BROWSER_GLOBALS = {
   Event: 'readonly',
   FileReader: 'readonly',
   Blob: 'readonly',
+  TextEncoder: 'readonly',
+  TextDecoder: 'readonly',
   File: 'readonly',
   matchMedia: 'readonly',
   performance: 'readonly',

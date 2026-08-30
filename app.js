@@ -24,9 +24,7 @@ const defaultState = {
   hoursPerWeek: 6,          // 以前ギャンブルに使っていた1週間あたりの平均時間
   goalDays: 30,
   goalCelebrated: 0,        // 祝福済みの目標値（重複紙吹雪の防止）
-  reminderOn: false,
-  reminderTime: '21:00',
-  lastReminded: '',
+  reminderTime: '21:00',    // カレンダーに登録するときの時刻
   relapses: [],             // やってしまった日 (YYYY-MM-DD)
   relapseNotes: {},         // { date: きっかけメモ }
   relapseAmounts: {},       // { date: その日に使った金額 }
@@ -89,32 +87,7 @@ function load() {
     return { ...defaultState };
   }
 }
-function save() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); mirrorReminder(); }
-
-/* Service Workerがアプリを閉じた後も通知を出せるよう、必要最小限の情報を
-   IndexedDBに写しておく（SWはlocalStorageを読めないため）。記録本体は写さない。 */
-async function mirrorReminder() {
-  if (!('indexedDB' in window)) return;
-  try {
-    const db = await new Promise((res, rej) => {
-      const rq = indexedDB.open('dangamble-sw', 1);
-      rq.onupgradeneeded = () => rq.result.createObjectStore('kv');
-      rq.onsuccess = () => res(rq.result);
-      rq.onerror = () => rej(rq.error);
-    });
-    const days = currentDays();
-    const tx = db.transaction('kv', 'readwrite');
-    tx.objectStore('kv').put({
-      on: !!state.reminderOn,
-      time: state.reminderTime || '21:00',
-      lastReminded: state.lastReminded || '',
-      loggedDate: state.logs[todayStr()] ? todayStr() : '',
-      title: t('notif.title'),
-      body: days > 0 ? t('notif.body', { n: days }) : t('notif.body0'),
-    }, 'reminder');
-    tx.oncomplete = () => db.close();
-  } catch (e) { /* IndexedDB不可の環境では画面内通知のみ */ }
-}
+function save() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
 
 /* 別タブでの変更を反映 */
 window.addEventListener('storage', e => {
@@ -978,26 +951,14 @@ function openSettings() {
   $('#nickname').value = state.nickname || '';
   $('#birthDate').value = state.birthDate;
   $('#reasonsInput').value = state.reasons.join('\n');
-  $('#reminderOn').checked = state.reminderOn;
-  $('#reminderTime').value = state.reminderTime;
+  $('#reminderTime').value = state.reminderTime || '21:00';
   $('#currency').value = curCode();
   $('#currency').dataset.init = curCode();
   $('#currencyWarn').hidden = true;
   $$('#themeSeg .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === state.theme));
   $$('#langSeg .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === (state.lang || 'auto')));
   $$('#weekStartSeg .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.week === state.weekStart));
-  updateReminderUI();
   openSheet('#settingsSheet');
-}
-
-function updateReminderUI() {
-  const on = $('#reminderOn').checked;
-  $('#reminderTimeField').style.display = on ? '' : 'none';
-  const hint = $('#reminderHint');
-  if (!('Notification' in window)) hint.textContent = t('hint.noNotif');
-  else if (!on) hint.textContent = t('hint.notifOff');
-  else if (Notification.permission === 'denied') hint.textContent = t('hint.notifDenied');
-  else hint.textContent = t('hint.notifOn', { time: state.reminderTime });
 }
 
 async function saveSettings() {
@@ -1017,20 +978,8 @@ async function saveSettings() {
   state.reasons = $('#reasonsInput').value.split('\n').map(s => s.trim()).filter(Boolean);
   state.reminderTime = $('#reminderTime').value || '21:00';
 
-  const wantReminder = $('#reminderOn').checked;
-  if (wantReminder && 'Notification' in window && Notification.permission === 'default') {
-    const perm = await Notification.requestPermission();
-    if (perm !== 'granted') {
-      $('#reminderOn').checked = false;
-      toast(t('notif.denied'));
-    }
-  }
-  state.reminderOn = $('#reminderOn').checked && ('Notification' in window) && Notification.permission === 'granted';
-
   save();
   closeSheet('#settingsSheet');
-  scheduleReminder();
-  updatePeriodicSync();
   updateDerived();
   render();
   toast(t('set.saved'));
@@ -1137,58 +1086,119 @@ function importData(file) {
 }
 
 /* ═══════════════ リマインダー ═══════════════ */
-let reminderTimer = null;
-function scheduleReminder() {
-  if (reminderTimer) { clearTimeout(reminderTimer); reminderTimer = null; }
-  if (!state.reminderOn || !('Notification' in window) || Notification.permission !== 'granted') return;
-  const [h, m] = (state.reminderTime || '21:00').split(':').map(Number);
-  const now = new Date();
-  const target = new Date();
-  target.setHours(h, m, 0, 0);
-  if (target <= now) {
-    maybeNotify();
-    target.setDate(target.getDate() + 1);
+/* ═══════════════ 毎日の声かけ（端末のカレンダーに登録） ═══════════════
+   以前はブラウザの通知でリマインドしていたが、サーバーを持たないこのアプリでは
+   「アプリを閉じている間に、指定した時刻ちょうどに鳴らす」ことができない。
+   iPhoneではその仕組み自体が使えず、Androidでも「12時間に1回くらい、
+   都合のいいときに」しか起こしてもらえないため、時刻を指定する意味がなかった。
+
+   代わりに、端末のカレンダーへ毎日の予定として登録してもらう。
+   カレンダーのアラームはOSの機能なので、アプリを閉じていても確実に鳴り、
+   iPhoneでもAndroidでも同じように動く。サーバーも通知の許可も要らない。 */
+
+/* 保存キーからアプリ固有の識別子を作る（例: kinshu_v1 → kinshu） */
+const APP_ID = STORE_KEY.replace(/_v\d+$/, '');
+
+function icsEscape(s) {
+  return String(s).replace(/([\\;,])/g, '\\$1').replace(/\n/g, '\\n');
+}
+
+/* iCalendarの1行は75オクテットまで。日本語は1文字3バイトになるため、
+   文字の途中で切らないようバイト単位で折り返す（継続行の先頭は空白1つ）。 */
+function icsFold(line) {
+  const bytes = new TextEncoder().encode(line);
+  if (bytes.length <= 74) return line;
+  const dec = new TextDecoder();
+  const parts = [];
+  let start = 0, limit = 74;
+  while (start < bytes.length) {
+    let end = Math.min(start + limit, bytes.length);
+    /* 0b10xxxxxx はUTF-8の続きのバイトなので、そこで切らずに1つ手前へ戻す */
+    while (end > start + 1 && end < bytes.length && (bytes[end] & 0xc0) === 0x80) end--;
+    parts.push(dec.decode(bytes.slice(start, end)));
+    start = end;
+    limit = 73;
   }
-  const delay = Math.min(target - now, 2 ** 31 - 1);
-  reminderTimer = setTimeout(() => { maybeNotify(); scheduleReminder(); }, delay);
-}
-function maybeNotify() {
-  const td = todayStr();
-  if (state.logs[td]) return;
-  if (state.lastReminded === td) return;
-  if (document.visibilityState === 'visible') return;   // 画面を見ている最中は不要
-  if (!('Notification' in window) || Notification.permission !== 'granted') return;
-  state.lastReminded = td;
-  save();
-  const days = currentDays();
-  const body = days > 0 ? t('notif.body', { n: days }) : t('notif.body0');
-  showNotif(t('notif.title'), body);
+  return parts.join('\r\n ');
 }
 
-/* Android ChromeはService Worker経由でないと通知を出せないため、SW優先で表示 */
-function showNotif(title, body) {
-  const opts = { body, tag: 'dangamble-daily', icon: 'icon-192.png', badge: 'icon-192.png' };
-  const fallback = () => { try { new Notification(title, opts); } catch (e) {} };
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistration()
-      .then(reg => { if (reg && reg.showNotification) reg.showNotification(title, opts); else fallback(); })
-      .catch(fallback);
-  } else fallback();
+function buildReminderIcs() {
+  const pad2 = n => String(n).padStart(2, '0');
+  const [h, m] = (state.reminderTime || '21:00').split(':').map(Number);
+  /* 今日はいまアプリを開いているので、翌日ぶんから始める */
+  const first = parseDate(addDays(todayStr(), 1));
+  const dtStart = `${first.getFullYear()}${pad2(first.getMonth() + 1)}${pad2(first.getDate())}` +
+    `T${pad2(h)}${pad2(m)}00`;
+  const n = new Date();
+  const stamp = `${n.getUTCFullYear()}${pad2(n.getUTCMonth() + 1)}${pad2(n.getUTCDate())}` +
+    `T${pad2(n.getUTCHours())}${pad2(n.getUTCMinutes())}${pad2(n.getUTCSeconds())}Z`;
+  const url = location.origin + location.pathname;
+  const summary = t('ics.summary');
+
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    `PRODID:-//${APP_ID}//habit-tracker//JP`,
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:${APP_ID}-daily-${state.deviceSalt || 'x'}@habit-tracker.local`,
+    `DTSTAMP:${stamp}`,
+    /* タイムゾーンを付けない＝どの端末でも「その土地の時刻」で鳴る */
+    `DTSTART:${dtStart}`,
+    'DURATION:PT15M',
+    'RRULE:FREQ=DAILY',
+    icsFold(`SUMMARY:${icsEscape(summary)}`),
+    icsFold(`DESCRIPTION:${icsEscape(t('ics.desc') + '\n' + url)}`),
+    icsFold(`URL:${url}`),
+    'BEGIN:VALARM',
+    'ACTION:DISPLAY',
+    'TRIGGER:-PT0M',
+    icsFold(`DESCRIPTION:${icsEscape(summary)}`),
+    'END:VALARM',
+    'END:VEVENT',
+    'END:VCALENDAR',
+    '',
+  ].join('\r\n');
 }
 
-/* 対応端末（Androidのホーム画面追加済みPWA）では、アプリを閉じていても
-   ブラウザが定期的にSWを起こして通知できるようPeriodic Background Syncを登録 */
-async function updatePeriodicSync() {
-  if (!('serviceWorker' in navigator)) return;
-  try {
-    const reg = await navigator.serviceWorker.ready;
-    if (!('periodicSync' in reg)) return;
-    if (state.reminderOn) {
-      await reg.periodicSync.register('dangamble-reminder', { minInterval: 12 * 60 * 60 * 1000 });
-    } else {
-      await reg.periodicSync.unregister('dangamble-reminder');
+async function addCalendarReminder() {
+  const ics = buildReminderIcs();
+  const name = `${APP_ID}-reminder.ics`;
+  /* スマホでは共有シート経由だと「カレンダーに追加」をその場で選べる */
+  if (navigator.canShare && navigator.share) {
+    try {
+      const file = new File([ics], name, { type: 'text/calendar' });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: t('ics.summary') });
+        toast(t('ics.done'));
+        return;
+      }
+    } catch (e) {
+      if (e && e.name === 'AbortError') return;   // ユーザーが共有をキャンセル
+      /* 共有に失敗したらファイル保存にフォールバック */
     }
-  } catch (e) { /* 未対応・権限なしの環境では画面内通知のみ */ }
+  }
+  const blob = new Blob([ics], { type: 'text/calendar' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast(t('ics.done'));
+}
+
+/* 旧バージョンでは、アプリを閉じている間の通知をService Workerに任せていた。
+   その登録が端末に残っていると、消したはずの通知がいつか出てしまうので、
+   起動時に静かに後片付けしておく。 */
+async function cleanupOldReminder() {
+  try {
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.ready;
+      if (reg.periodicSync) await reg.periodicSync.unregister(APP_ID + '-reminder');
+    }
+  } catch (e) { /* 未対応の環境ではそもそも登録されていない */ }
+  try { indexedDB.deleteDatabase(APP_ID + '-sw'); } catch (e) {}
 }
 
 /* ═══════════════ オンボーディング ═══════════════ */
@@ -1553,7 +1563,12 @@ function init() {
   $('#settingsBtn').addEventListener('click', openSettings);
   $('#saveSettings').addEventListener('click', saveSettings);
   $('#closeSettings').addEventListener('click', () => closeSheet('#settingsSheet'));
-  $('#reminderOn').addEventListener('change', updateReminderUI);
+  $('#addCalendar').addEventListener('click', () => {
+    /* 「保存」を押していなくても、いま入力されている時刻で作る */
+    state.reminderTime = $('#reminderTime').value || '21:00';
+    save();
+    addCalendarReminder();
+  });
   /* 通貨を変えたら金額の入れ直しを促す（自動両替はしない） */
   $('#currency').addEventListener('change', () => {
     const warn = $('#currencyWarn');
@@ -1571,7 +1586,7 @@ function init() {
   $$('#langSeg .seg-btn').forEach(b => b.addEventListener('click', () => {
     state.lang = b.dataset.lang;
     $$('#langSeg .seg-btn').forEach(x => x.classList.toggle('active', x === b));
-    save(); applyLang(); updateReminderUI(); render();
+    save(); applyLang(); render();
   }));
   $$('#weekStartSeg .seg-btn').forEach(b => b.addEventListener('click', () => {
     state.weekStart = b.dataset.week;
@@ -1626,8 +1641,7 @@ function init() {
     if (action) history.replaceState(null, '', location.pathname);
   }
 
-  scheduleReminder();
-  updatePeriodicSync();
+  cleanupOldReminder();
   /* 日付またぎ対応。アプリを開いたまま日付が変わっても継続日数が止まらないよう、
      1分ごとと「画面に戻ったとき」に日付を見張り、変わっていたら数え直す。
      スマホのホーム画面から使うと何日も起動しっぱなしになるため必須。 */
@@ -1646,7 +1660,6 @@ function init() {
   setInterval(checkDateRollover, 60000);
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) return;
-    scheduleReminder();
     checkDateRollover();
   });
   window.addEventListener('focus', checkDateRollover);

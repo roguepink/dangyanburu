@@ -312,6 +312,36 @@ async function onboard(page, opts) {
   await page.click('#closeSettings');
   await page.waitForTimeout(300);
 
+  // ── 毎日の声かけ: 端末のカレンダーに登録できる ──
+  // 通知はアプリを閉じていると時刻どおりに鳴らせないため、カレンダーに任せる方式に変更した
+  check('通知のオン/オフ設定は無くなっている', !(await page.$('#reminderOn')));
+  await page.click('#settingsBtn');
+  await page.waitForTimeout(300);
+  await page.fill('#reminderTime', '20:30');
+  const [icsDl] = await Promise.all([
+    page.waitForEvent('download', { timeout: 5000 }),
+    page.click('#addCalendar'),
+  ]);
+  check('カレンダー用のファイルが作られる', (icsDl.suggestedFilename() || '').endsWith('-reminder.ics'));
+  const icsText = require('fs').readFileSync(await icsDl.path(), 'utf8');
+  check('毎日くり返す予定になっている', /RRULE:FREQ=DAILY/.test(icsText));
+  // 英語の文言が日本語側を上書きしていたことがあるため、言語を明示して確認する
+  check('日本語表示では予定名も日本語',
+    await page.evaluate(() => { I18N.setLang('ja'); return /[ぁ-んァ-ヶ一-龠]/.test(I18N.t('ics.summary')); }));
+  check('英語表示では予定名も英語',
+    await page.evaluate(() => { I18N.setLang('en'); const v = I18N.t('ics.summary');
+      I18N.setLang('ja'); return !/[ぁ-んァ-ヶ一-龠]/.test(v); }));
+  check('指定した時刻が入っている', /DTSTART:\d{8}T203000/.test(icsText));
+  check('タイムゾーン指定なし(その土地の時刻で鳴る)', !/DTSTART;TZID/.test(icsText));
+  check('アラームが設定されている', /BEGIN:VALARM[\s\S]*ACTION:DISPLAY[\s\S]*END:VALARM/.test(icsText));
+  check('改行がCRLF(仕様どおり)', icsText.includes('\r\n') && !/[^\r]\n/.test(icsText));
+  check('1行75バイト以内に折り返されている',
+    icsText.split('\r\n').every(l => Buffer.byteLength(l, 'utf8') <= 75));
+  check('入力した時刻が保存される',
+    (await page.evaluate(() => JSON.parse(localStorage.getItem('dangamble_v1')).reminderTime)) === '20:30');
+  await page.click('#closeSettings');
+  await page.waitForTimeout(300);
+
   // ── 18. 桁の多い金額でも横に崩れない ──
   await page.click('#settingsBtn');
   await page.waitForTimeout(300);

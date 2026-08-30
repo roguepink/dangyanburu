@@ -467,10 +467,11 @@ try { var _s = JSON.parse(localStorage.getItem('dangamble_v1')); if (_s && _s.th
     <p class="sec-title" data-i18n="set.help">困ったとき</p>
     <button id="openHelpFromSet" class="btn" data-i18n="help.open">窓口を見る</button>
 
-    <p class="sec-title" data-i18n="set.notif">リマインダー</p>
-    <label class="field toggle-field"><span data-i18n="set.reminderOn">毎日のリマインダー</span><input type="checkbox" id="reminderOn" /></label>
-    <label class="field" id="reminderTimeField"><span data-i18n="set.reminderTime">通知する時刻</span><input type="time" id="reminderTime" value="21:00" /></label>
-    <p class="hint" id="reminderHint"></p>
+    <p class="sec-title" data-i18n="set.remind">毎日の声かけ</p>
+    <p class="hint" data-i18n="set.remindHint"></p>
+    <label class="field"><span data-i18n="set.remindTime">思い出したい時刻</span><input type="time" id="reminderTime" value="21:00" /></label>
+    <button id="addCalendar" class="btn" data-i18n="set.remindAdd">📅 スマホのカレンダーに登録</button>
+    <p class="hint" data-i18n="set.remindHow"></p>
 
     <p class="sec-title" data-i18n="set.data">データ</p>
     <div class="data-actions">
