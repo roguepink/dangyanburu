@@ -270,6 +270,45 @@ async function onboard(page, opts) {
   check('設定から安全策を開ける', !!(await page.$('#openSafetyFromSet')));
   check('設定から相談窓口を開ける', !!(await page.$('#openHelpFromSet')));
   check('姉妹アプリへのリンクが3つある', (await page.$$('.link-btn')).length === 3);
+
+  // 設定からの導線。以前は設定を閉じる「戻る」が遅れて届き、開いた直後の
+  // シートまで閉じられてホームに戻ってしまっていた
+  await page.click('#openSafetyFromSet');
+  await page.waitForTimeout(600);
+  check('設定から安全策シートへ移れる（ホームに戻らない）',
+    !(await page.$eval('#safetySheet', el => el.classList.contains('hidden'))));
+  check('移ったあと設定シートは閉じている',
+    await page.$eval('#settingsSheet', el => el.classList.contains('hidden')));
+  await page.goBack();
+  await page.waitForTimeout(400);
+  check('安全策シートは端末の戻るで閉じる',
+    await page.$eval('#safetySheet', el => el.classList.contains('hidden')));
+
+  await page.click('#settingsBtn');
+  await page.waitForTimeout(300);
+  await page.click('#openHelpFromSet');
+  await page.waitForTimeout(600);
+  check('設定から相談窓口シートへ移れる（ホームに戻らない）',
+    !(await page.$eval('#helpSheet', el => el.classList.contains('hidden'))));
+  await page.click('#closeHelp');
+  await page.waitForTimeout(400);
+
+  // 衝動タイマーの上から窓口を開いて閉じても、タイマーは開いたまま
+  await page.click('#urgeFab');
+  await page.waitForTimeout(400);
+  await page.click('#urgeHelpLink');
+  await page.waitForTimeout(500);
+  check('衝動タイマーの上から窓口を開ける',
+    !(await page.$eval('#helpSheet', el => el.classList.contains('hidden'))));
+  await page.click('#closeHelp');
+  await page.waitForTimeout(500);
+  check('窓口を閉じても衝動タイマーは開いたまま',
+    !(await page.$eval('#urgeOverlay', el => el.classList.contains('hidden'))));
+  await page.click('#urgeClose');
+  await page.waitForTimeout(300);
+
+  await page.click('#settingsBtn');
+  await page.waitForTimeout(300);
   await page.click('#closeSettings');
   await page.waitForTimeout(300);
 

@@ -554,7 +554,10 @@ button.cal-cell:hover { outline: 1.5px solid var(--primary); }
 #urgeMinSeg { margin-bottom: 16px; }
 
 /* ═══════════════ シート（下から出るパネル） ═══════════════ */
-.sheet { position: fixed; inset: 0; z-index: 90; background: rgba(8, 12, 24, .55); display: flex; align-items: flex-end; justify-content: center; }
+/* 全画面表示(.overlay = 衝動タイマー・初回設定)より手前に置く。
+   衝動タイマーから相談窓口を開いたとき、シートがタイマーの裏に回って
+   ボタンを押せなくなっていたため。 */
+.sheet { position: fixed; inset: 0; z-index: 110; background: rgba(8, 12, 24, .55); display: flex; align-items: flex-end; justify-content: center; }
 .sheet-panel {
   background: var(--card); border-radius: var(--radius-xl) var(--radius-xl) 0 0; padding: 10px 20px calc(22px + env(safe-area-inset-bottom, 0px));
   width: 100%; max-width: 560px; max-height: 88vh; overflow-y: auto;

@@ -1167,7 +1167,7 @@ function maybeNotify() {
 
 /* Android ChromeはService Worker経由でないと通知を出せないため、SW優先で表示 */
 function showNotif(title, body) {
-  const opts = { body, tag: 'kinshu-daily', icon: 'icon-192.png', badge: 'icon-192.png' };
+  const opts = { body, tag: 'dangamble-daily', icon: 'icon-192.png', badge: 'icon-192.png' };
   const fallback = () => { try { new Notification(title, opts); } catch (e) {} };
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistration()
@@ -1276,9 +1276,20 @@ function openSheet(sel) {
   /* バックアップ誘導カードはシートより手前に浮くため、
      開いたシートのボタンを覆ってしまわないよう必ず引っ込める。 */
   hideBackupNudge();
+
+  /* すでに別のシートが開いているなら、閉じずに履歴ごと差し替える。
+     先に closeSheet() で閉じると history.back() が呼ばれ、その「戻る」が
+     ワンテンポ遅れて届いて、開いたばかりのシートまで閉じてしまう
+     （設定 →「安全策をチェックする」でホームに戻ってしまう不具合）。 */
+  const from = SHEET_SELS.find(x => x !== sel && !$(x).classList.contains('hidden'));
+  if (from) $(from).classList.add('hidden');
+
   lastFocus = document.activeElement;
   el.classList.remove('hidden');
-  try { history.pushState({ sheet: sel }, ''); } catch (e) {}
+  try {
+    if (from && history.state && history.state.sheet === from) history.replaceState({ sheet: sel }, '');
+    else history.pushState({ sheet: sel }, '');
+  } catch (e) {}
   const panel = el.querySelector('.sheet-panel, .sos-box');
   if (panel) { panel.setAttribute('tabindex', '-1'); panel.focus({ preventScroll: true }); }
 }
@@ -1324,8 +1335,11 @@ function enableSheetSwipe(sel) {
 
 window.addEventListener('popstate', () => {
   SHEET_SELS.forEach(s => closeSheet(s, true));
+  /* 衝動タイマーの上に窓口シートを開いて閉じた場合、戻った先はタイマー自身。
+     ここで一緒に閉じてしまうと、動いていたタイマーが消えてしまう。 */
   const urge = $('#urgeOverlay');
-  if (urge && !urge.classList.contains('hidden')) closeUrge(true);
+  const backToUrge = history.state && history.state.sheet === '#urgeOverlay';
+  if (urge && !urge.classList.contains('hidden') && !backToUrge) closeUrge(true);
 });
 
 /* 端末が対応していれば軽い振動でフィードバック */
@@ -1532,8 +1546,8 @@ function init() {
   /* 安全策・相談窓口 */
   $('#closeSafety').addEventListener('click', () => closeSheet('#safetySheet'));
   $('#closeHelp').addEventListener('click', () => closeSheet('#helpSheet'));
-  $('#openSafetyFromSet').addEventListener('click', () => { closeSheet('#settingsSheet'); openSafetySheet(); });
-  $('#openHelpFromSet').addEventListener('click', () => { closeSheet('#settingsSheet'); openHelpSheet(); });
+  $('#openSafetyFromSet').addEventListener('click', openSafetySheet);
+  $('#openHelpFromSet').addEventListener('click', openHelpSheet);
 
   /* 設定 */
   $('#settingsBtn').addEventListener('click', openSettings);
