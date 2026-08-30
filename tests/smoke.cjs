@@ -152,10 +152,30 @@ async function onboard(page, opts) {
   check('自助グループ(GA)の案内がある', /ギャンブラーズ・アノニマス/.test(helpText));
   check('24時間の窓口が案内されている', /0120-279-338/.test(helpText));
   check('借金の相談先が案内されている', /188|法テラス/.test(helpText));
+  /* 貸付自粛制度はギャンブル依存に対して最も実効性のある公的な仕組みなので、
+     一覧から消えないよう固定でテストする。 */
+  check('貸付自粛制度が案内されている', /貸付自粛制度/.test(helpText));
+  check('貸付自粛は目印付きで最上位に出る',
+    (await page.$$('#helpList .help-item')).length > 0 &&
+    (await page.$eval('#helpList .help-item-pin .help-item-title', el => el.textContent)).includes('貸付自粛'));
+  check('依存症専門の入口が案内されている', /依存症対策全国センター/.test(helpText));
+  check('窓口が種類ごとに分けられている', (await page.$$('#helpList .help-group')).length === 3);
+  /* 「掛けたのに繋がらない」は依存症のさなかでは決定的に効くので、
+     24時間でない窓口には必ず受付時間を併記する。 */
+  check('24時間でない窓口に受付時間が書いてある',
+    /平日9:00〜17:00/.test(helpText) && /平日9:00〜21:00/.test(helpText));
+  check('有料の番号は通話料を明示している', /通話料は自己負担/.test(helpText));
+  /* 外部サイトへ飛ぶとき、どのアプリから来たかを相手に渡さない。 */
+  const helpLinks = await page.$$eval('#helpList .help-link',
+    els => els.map(e => ({ rel: e.getAttribute('rel'), target: e.getAttribute('target'), href: e.href })));
+  check('外部リンクがある', helpLinks.length === 5);
+  check('外部リンクは参照元を渡さない', helpLinks.every(l => /noreferrer/.test(l.rel || '')));
+  check('外部リンクは別タブで開く', helpLinks.every(l => l.target === '_blank'));
+  check('確認日が明記されている', /2026年8月に確認/.test(helpText));
   check('危機時の案内が最初に出ている', /死にたい/.test(await page.textContent('.help-urgent')));
   check('番号はタップで発信できる',
     (await page.getAttribute('#helpUrgentTel a', 'href')) === 'tel:0120279338');
-  check('各窓口にも発信ボタンがある', (await page.$$('#helpList .help-tel')).length === 4);
+  check('各窓口にも発信ボタンがある', (await page.$$('#helpList .help-tel')).length === 5);
   await page.click('#closeHelp');
   await page.waitForTimeout(200);
 

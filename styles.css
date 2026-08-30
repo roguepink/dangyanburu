@@ -524,6 +524,20 @@ button.cal-cell:hover { outline: 1.5px solid var(--primary); }
 .safety-item.done > span { text-decoration: line-through; opacity: .68; }
 
 .help-list { display: flex; flex-direction: column; gap: 10px; margin: 14px 0 6px; }
+.help-group {
+  font-size: .82rem; font-weight: 700; color: var(--muted);
+  letter-spacing: .04em; margin: 16px 2px 2px;
+}
+.help-group:first-child { margin-top: 2px; }
+.help-item-pin { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary) inset; }
+.help-pin {
+  display: inline-block; font-size: .74rem; font-weight: 700; color: var(--primary-dark);
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  border-radius: var(--radius-pill); padding: 2px 9px; margin-bottom: 6px;
+}
+.help-links { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 9px; }
+.help-link { font-size: .82rem; font-weight: 600; color: var(--primary-dark); text-decoration: none; }
+.help-link:active { opacity: .6; }
 .help-item { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 13px 14px; }
 .help-item-title { font-weight: 700; font-size: .93rem; margin-bottom: 4px; }
 .help-item-body { font-size: .84rem; color: var(--muted); line-height: 1.65; overflow-wrap: anywhere; }

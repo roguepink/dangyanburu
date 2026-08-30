@@ -920,22 +920,47 @@ function openSafetySheet() {
 }
 
 /* ═══════════════ 相談窓口 ═══════════════
-   番号は日本国内の公的・全国規模の窓口のみを載せている。
-   個人が特定される情報は一切送らず、リンクも張らずに番号だけを示す。 */
-const HELP_ITEMS = ['g1', 'g2', 'g3', 'g4', 'g5', 'g6'];
-/* 番号は tel: リンクにして、つらいときに番号を書き写さずそのまま掛けられるようにする。
-   相談先を持たない項目（センターや自助グループ）はリンクなし。 */
-const HELP_TEL = { g3: '0570-064-556', g4: '0120-279-338', g5: '188', g6: '0570-078374' };
+   掲載しているのは日本国内の公的な窓口と、全国規模で活動している団体だけ。
+   電話番号・受付時間は 2026-08 に各窓口の情報を突き合わせて確認した。
+   外部リンクは rel="noreferrer" を付け、どのアプリから来たかも渡さない。 */
+const HELP_GROUPS = [
+  { id: 'gam', items: ['g1', 'g2', 'g3'] },
+  { id: 'money', items: ['m1', 'm2', 'm3', 'm4'] },
+  { id: 'mind', items: ['h1', 'h2'] },
+];
+/* 番号は tel: リンクにして、つらいときに番号を書き写さずそのまま掛けられるようにする。 */
+const HELP_TEL = {
+  m2: '0570-051-051', m3: '0570-078374', m4: '188',
+  h1: '0120-279-338', h2: '0570-064-556',
+};
+const HELP_LINKS = {
+  g1: [['https://www.zmhwc.jp/centerlist.html', 'help.lk.center']],
+  g2: [['https://www.ncasa-japan.jp/', 'help.lk.ncasa']],
+  g3: [['http://www.gajapan.jp/', 'help.lk.ga'], ['https://www.gam-anon.jp/', 'help.lk.gamanon']],
+  m1: [['https://www.j-fsa.or.jp/personal/trouble/way/', 'help.lk.jisyuku']],
+};
+/* 貸付自粛制度はギャンブル依存に対して群を抜いて効くので、一覧の中で目印を付ける。 */
+const HELP_PINNED = 'm1';
 function telLink(num, label) {
   return `<a class="btn btn-sm help-tel" href="tel:${num.replace(/-/g, '')}">📞 ${escapeHtml(label)}</a>`;
 }
-function openHelpSheet() {
-  $('#helpList').innerHTML = HELP_ITEMS.map(k =>
-    `<div class="help-item">
+function webLink(url, label) {
+  return `<a class="help-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)} ↗</a>`;
+}
+function helpItemHtml(k) {
+  const links = (HELP_LINKS[k] || []).map(([u, key]) => webLink(u, t(key))).join('');
+  return `<div class="help-item${k === HELP_PINNED ? ' help-item-pin' : ''}">
       <div class="help-item-title">${escapeHtml(t('help.' + k + 't'))}</div>
+      ${k === HELP_PINNED ? `<div class="help-pin">⚑ ${escapeHtml(t('help.pin'))}</div>` : ''}
       <div class="help-item-body">${escapeHtml(t('help.' + k + 'b'))}</div>
       ${HELP_TEL[k] ? telLink(HELP_TEL[k], HELP_TEL[k]) : ''}
-    </div>`).join('');
+      ${links ? `<div class="help-links">${links}</div>` : ''}
+    </div>`;
+}
+function openHelpSheet() {
+  $('#helpList').innerHTML = HELP_GROUPS.map(g =>
+    `<p class="help-group">${escapeHtml(t('help.grp.' + g.id))}</p>` +
+    g.items.map(helpItemHtml).join('')).join('');
   $('#helpUrgentTel').innerHTML = telLink('0120-279-338', t('help.urgentCall'));
   openSheet('#helpSheet');
 }
