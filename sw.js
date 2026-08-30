@@ -1,7 +1,7 @@
 /* ギャンブル断ちトラッカー Service Worker
    - ページ(HTML)はネットワーク優先: 更新が確実にユーザーに届く
    - アセットはキャッシュ優先＋裏で更新(stale-while-revalidate) */
-const CACHE = 'dangamble-63068f9923';
+const CACHE = 'dangamble-1f6420b60f';
 const ASSETS = [
   './',
   './index.html',

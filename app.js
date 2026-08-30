@@ -1162,16 +1162,40 @@ function buildReminderIcs() {
   ].join('\r\n');
 }
 
+/* Googleカレンダーの「予定を追加」画面を、内容を入れた状態で開くURL。
+   Androidではカレンダーのアプリがそのまま開き、保存を押すだけで済むため、
+   ファイルを保存して開き直すより手数が少ない。 */
+function googleCalendarUrl() {
+  const pad2 = n => String(n).padStart(2, '0');
+  const [h, m] = (state.reminderTime || '21:00').split(':').map(Number);
+  const st = parseDate(addDays(todayStr(), 1));
+  st.setHours(h, m, 0, 0);
+  const en = new Date(st.getTime() + 15 * 60000);
+  const fmt = d => `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}` +
+    `T${pad2(d.getHours())}${pad2(d.getMinutes())}00`;
+  const q = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: t('ics.summary'),
+    dates: `${fmt(st)}/${fmt(en)}`,
+    recur: 'RRULE:FREQ=DAILY',
+    details: t('ics.desc') + '\n' + location.origin + location.pathname,
+  });
+  return 'https://calendar.google.com/calendar/render?' + q.toString();
+}
+
 async function addCalendarReminder() {
   const ics = buildReminderIcs();
   const name = `${APP_ID}-reminder.ics`;
-  /* スマホでは共有シート経由だと「カレンダーに追加」をその場で選べる */
+  const after = $('#calAfter');
+  if (after) after.hidden = true;
+
+  /* iPhoneなどでは共有シートに「カレンダー」が出るので、その場で追加できる */
   if (navigator.canShare && navigator.share) {
     try {
       const file = new File([ics], name, { type: 'text/calendar' });
       if (navigator.canShare({ files: [file] })) {
         await navigator.share({ files: [file], title: t('ics.summary') });
-        toast(t('ics.done'));
+        toast(t('ics.shared'));
         return;
       }
     } catch (e) {
@@ -1179,13 +1203,22 @@ async function addCalendarReminder() {
       /* 共有に失敗したらファイル保存にフォールバック */
     }
   }
+
+  /* Android Chromeなどはカレンダー形式の共有を許可していないため、
+     ここへ来る。ファイルを保存しただけでは何も起こらず「終わった」ように
+     見えてしまうので、次に何をすればよいかを画面に残しておく。 */
   const blob = new Blob([ics], { type: 'text/calendar' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = name;
   a.click();
   URL.revokeObjectURL(a.href);
-  toast(t('ics.done'));
+  if (after) {
+    /* 文中の「保存したファイルを開く」を太字にしたいのでHTMLとして入れる。
+       name はアプリが組み立てた固定の文字列なので、外部の入力は混ざらない。 */
+    after.innerHTML = t('ics.after', { name });
+    after.hidden = false;
+  }
 }
 
 /* 旧バージョンでは、アプリを閉じている間の通知をService Workerに任せていた。
@@ -1568,6 +1601,16 @@ function init() {
     state.reminderTime = $('#reminderTime').value || '21:00';
     save();
     addCalendarReminder();
+  });
+  $('#calGoogle').addEventListener('click', () => {
+    state.reminderTime = $('#reminderTime').value || '21:00';
+    save();
+    window.open(googleCalendarUrl(), '_blank', 'noopener');
+  });
+  /* 「カレンダーに登録」を押したら、代替リンクの行き先も同じ時刻に更新しておく
+     （テストからも、実際に渡している内容を確認できるようにする） */
+  $('#addCalendar').addEventListener('click', () => {
+    $('#calGoogle').dataset.testUrl = googleCalendarUrl();
   });
   /* 通貨を変えたら金額の入れ直しを促す（自動両替はしない） */
   $('#currency').addEventListener('change', () => {

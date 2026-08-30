@@ -553,6 +553,26 @@ button.cal-cell:hover { outline: 1.5px solid var(--primary); }
 .urge-help { margin: 4px auto 10px; }
 #urgeMinSeg { margin-bottom: 16px; }
 
+/* ═══════════════ 毎日の声かけ ═══════════════ */
+/* 時刻の指定と登録ボタンが別々のものに見えないよう、1つの枠にまとめる。
+   「時刻を決める → 登録する」で1つの操作だと分かるようにするため。 */
+.remind-box {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 14px;
+}
+.remind-lead { font-size: .84rem; color: var(--muted); line-height: 1.7; margin-bottom: 12px; }
+.remind-box .field { margin-bottom: 12px; }
+.remind-add { width: 100%; }
+/* 保存しただけでは何も起きないので、次にすることを目立つ色で残す */
+.remind-after {
+  margin-top: 12px; font-size: .84rem; line-height: 1.7;
+  background: color-mix(in srgb, var(--accent) 12%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  border-radius: var(--radius-sm); padding: 11px 13px;
+}
+.remind-alt { margin: 10px auto 0; }
+.remind-note { margin-top: 10px; }
+
 /* ═══════════════ シート（下から出るパネル） ═══════════════ */
 /* 全画面表示(.overlay = 衝動タイマー・初回設定)より手前に置く。
    衝動タイマーから相談窓口を開いたとき、シートがタイマーの裏に回って

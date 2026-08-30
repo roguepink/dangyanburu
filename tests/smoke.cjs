@@ -337,6 +337,16 @@ async function onboard(page, opts) {
   check('改行がCRLF(仕様どおり)', icsText.includes('\r\n') && !/[^\r]\n/.test(icsText));
   check('1行75バイト以内に折り返されている',
     icsText.split('\r\n').every(l => Buffer.byteLength(l, 'utf8') <= 75));
+  check('保存だけで終わらないよう、次の手順が画面に残る',
+    !(await page.$eval('#calAfter', el => el.hidden)));
+  check('案内に保存したファイル名が入る',
+    /-reminder\.ics/.test(await page.textContent('#calAfter')));
+  check('Googleカレンダーで開く導線がある', !!(await page.$('#calGoogle')));
+  check('Googleカレンダーへ正しい内容で渡している', await page.evaluate(() => {
+    const u = new URL(document.querySelector('#calGoogle').dataset.testUrl || '');
+    return u.searchParams.get('recur') === 'RRULE:FREQ=DAILY' &&
+           /T203000$/.test((u.searchParams.get('dates') || '').split('/')[0]);
+  }));
   check('入力した時刻が保存される',
     (await page.evaluate(() => JSON.parse(localStorage.getItem('dangamble_v1')).reminderTime)) === '20:30');
   await page.click('#closeSettings');

@@ -468,10 +468,14 @@ try { var _s = JSON.parse(localStorage.getItem('dangamble_v1')); if (_s && _s.th
     <button id="openHelpFromSet" class="btn" data-i18n="help.open">窓口を見る</button>
 
     <p class="sec-title" data-i18n="set.remind">毎日の声かけ</p>
-    <p class="hint" data-i18n="set.remindHint"></p>
-    <label class="field"><span data-i18n="set.remindTime">思い出したい時刻</span><input type="time" id="reminderTime" value="21:00" /></label>
-    <button id="addCalendar" class="btn" data-i18n="set.remindAdd">📅 スマホのカレンダーに登録</button>
-    <p class="hint" data-i18n="set.remindHow"></p>
+    <div class="remind-box">
+      <p class="remind-lead" data-i18n="set.remindHint"></p>
+      <label class="field"><span data-i18n="set.remindTime">時刻</span><input type="time" id="reminderTime" value="21:00" /></label>
+      <button id="addCalendar" class="btn btn-primary remind-add" data-i18n="set.remindAdd">📅 カレンダーに登録する</button>
+      <p class="remind-after" id="calAfter" hidden></p>
+      <button id="calGoogle" class="btn-quiet remind-alt" data-i18n="ics.google">Googleカレンダーで開く</button>
+      <p class="hint remind-note" data-i18n="set.remindHow"></p>
+    </div>
 
     <p class="sec-title" data-i18n="set.data">データ</p>
     <div class="data-actions">

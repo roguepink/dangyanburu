@@ -325,13 +325,16 @@ window.I18N = (() => {
 
 
     'set.remind': '毎日の声かけ',
-    'set.remindHint': '決まった時刻に思い出せるよう、この端末のカレンダーに「毎日の予定」として登録できます。カレンダーのアラームはスマホの機能なので、アプリを閉じていても鳴ります。',
-    'set.remindTime': '思い出したい時刻',
-    'set.remindAdd': '📅 スマホのカレンダーに登録',
-    'set.remindHow': '押すとカレンダー用のファイルができます。開いて「追加」を選ぶと、毎日その時刻に通知が届くようになります。やめたいときは、カレンダーからその予定を削除してください。',
+    'set.remindHint': 'ここで決めた時刻に思い出せるよう、スマホのカレンダーへ「毎日くり返す予定」を作ります。カレンダーのアラームはスマホの機能なので、アプリを閉じていても鳴ります。',
+    'set.remindTime': '時刻',
+    'set.remindAdd': '📅 カレンダーに登録する',
+    'set.remindHow': 'やめたいときは、カレンダーからその予定を削除してください。',
     'ics.summary': '🕊️ ギャンブル断ちトラッカー：今日を記録する',
     'ics.desc': 'アプリを開いて、今日の記録をつけましょう。',
-    'ics.done': 'カレンダー用のファイルを作りました。開いて「追加」を選んでください 📅',
+    'ics.google': 'うまくいかないときは Googleカレンダーで開く',
+    'ics.shared': '「カレンダー」を選ぶと追加できます 📅',
+    'ics.after': '📥「{name}」を保存しました。<b>保存したファイルを開く</b>と、カレンダーへの追加画面が出ます。（通知バーのダウンロード、または「ファイル」アプリのダウンロードフォルダから開けます）',
+    'ics.done': 'カレンダー用のファイルを作りました 📅',
 
     'backup.saved': 'バックアップを保存しました 💾',
     'backup.loaded': '復元しました ✅',
@@ -686,13 +689,16 @@ window.I18N = (() => {
 
 
     'set.remind': 'Daily nudge',
-    'set.remindHint': 'Add a daily event to this device’s calendar so you remember at a set time. Calendar alarms are handled by your phone, so they go off even when the app is closed.',
-    'set.remindTime': 'Time to be reminded',
-    'set.remindAdd': '📅 Add to my phone’s calendar',
-    'set.remindHow': 'This creates a calendar file. Open it and choose “Add” to get a daily alert at that time. To stop, delete that event from your calendar.',
+    'set.remindHint': 'Creates a daily repeating event in your phone’s calendar at the time you set here. Calendar alarms are handled by your phone, so they go off even when the app is closed.',
+    'set.remindTime': 'Time',
+    'set.remindAdd': '📅 Add to my calendar',
+    'set.remindHow': 'To stop, delete that event from your calendar.',
     'ics.summary': '🕊️ Gamble-Free Tracker: log today',
     'ics.desc': 'Open the app and log today.',
-    'ics.done': 'Calendar file created. Open it and choose “Add” 📅',
+    'ics.google': 'Not working? Open in Google Calendar',
+    'ics.shared': 'Choose “Calendar” to add it 📅',
+    'ics.after': '📥 Saved “{name}”. <b>Open the saved file</b> to get the “add to calendar” screen (from your download notification, or the Downloads folder in your Files app).',
+    'ics.done': 'Calendar file created 📅',
 
     'backup.saved': 'Backup saved 💾',
     'backup.loaded': 'Restored ✅',
