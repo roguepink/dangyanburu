@@ -141,9 +141,9 @@ npm run stamp-sw:check
 
 | アプリ | 内容 |
 | --- | --- |
-| [禁酒トラッカー](https://nakanointeria5963-alt.github.io/kinnsyu/) | お酒を完全にやめる |
-| [節酒サポート](https://nakanointeria5963-alt.github.io/sesshu/) | 上限を決めてお酒を減らす |
-| [禁煙トラッカー](https://nakanointeria5963-alt.github.io/kinnenn/) | タバコをやめる |
+| [禁酒トラッカー](https://roguepink.github.io/kinnsyu/) | お酒を完全にやめる |
+| [節酒サポート](https://roguepink.github.io/sesshu/) | 上限を決めてお酒を減らす |
+| [禁煙トラッカー](https://roguepink.github.io/kinnenn/) | タバコをやめる |
 
 共通ファイル（`util.js` / `package.json` / Lint設定など）は本家の `kinnsyu` から
 `node tools/sync-common.cjs` で配布しています。このアプリはタロット関連と `sw.js` を
