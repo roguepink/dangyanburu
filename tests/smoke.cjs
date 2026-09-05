@@ -292,10 +292,10 @@ async function onboard(page, opts) {
   // ── 姉妹アプリへのリンク（独自ドメインへ移すときに切れやすいので固定する） ──
   const sibHrefs = await page.$$eval('.link-btn', els => els.map(a => a.getAttribute('href')));
   check('姉妹アプリへのリンクが3本ある', sibHrefs.length === 3);
-  check('禁酒へのリンクがある', sibHrefs.some(h => h.endsWith('/kinnsyu/')));
-  check('節酒へのリンクがある', sibHrefs.some(h => h.endsWith('/sesshu/')));
-  check('禁煙へのリンクがある', sibHrefs.some(h => h.endsWith('/kinnenn/')));
-  check('自分自身へは張っていない', !sibHrefs.some(h => h.endsWith('/dangyanburu/')));
+  check('禁酒へのリンクがある', sibHrefs.some(h => h.startsWith('https://kinshu.roguepink.com/')));
+  check('節酒へのリンクがある', sibHrefs.some(h => h.startsWith('https://sesshu.roguepink.com/')));
+  check('禁煙へのリンクがある', sibHrefs.some(h => h.startsWith('https://kinen.roguepink.com/')));
+  check('自分自身へは張っていない', !sibHrefs.some(h => h.startsWith('https://dangamble.roguepink.com/')));
   check('姉妹アプリのリンクは参照元を渡さない',
     await page.$$eval('.link-btn', els => els.every(a => (a.rel || '').includes('noopener'))));
 
