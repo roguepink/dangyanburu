@@ -289,7 +289,15 @@ async function onboard(page, opts) {
   check('設定に機種変更の手順がある', !!(await page.$('.migrate-details')));
   check('設定から安全策を開ける', !!(await page.$('#openSafetyFromSet')));
   check('設定から相談窓口を開ける', !!(await page.$('#openHelpFromSet')));
-  check('姉妹アプリへのリンクが3つある', (await page.$$('.link-btn')).length === 3);
+  // ── 姉妹アプリへのリンク（独自ドメインへ移すときに切れやすいので固定する） ──
+  const sibHrefs = await page.$$eval('.link-btn', els => els.map(a => a.getAttribute('href')));
+  check('姉妹アプリへのリンクが3本ある', sibHrefs.length === 3);
+  check('禁酒へのリンクがある', sibHrefs.some(h => h.endsWith('/kinnsyu/')));
+  check('節酒へのリンクがある', sibHrefs.some(h => h.endsWith('/sesshu/')));
+  check('禁煙へのリンクがある', sibHrefs.some(h => h.endsWith('/kinnenn/')));
+  check('自分自身へは張っていない', !sibHrefs.some(h => h.endsWith('/dangyanburu/')));
+  check('姉妹アプリのリンクは参照元を渡さない',
+    await page.$$eval('.link-btn', els => els.every(a => (a.rel || '').includes('noopener'))));
 
   // 設定からの導線。以前は設定を閉じる「戻る」が遅れて届き、開いた直後の
   // シートまで閉じられてホームに戻ってしまっていた
